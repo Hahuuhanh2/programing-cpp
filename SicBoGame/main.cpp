@@ -1,0 +1,133 @@
+#include <SFML/Graphics.hpp>
+#include <iostream>
+#include <random>
+
+using namespace sf;
+using namespace std;
+
+int main()
+{
+    RenderWindow window(VideoMode(800, 600), "Tai xiu tung xuc sac");
+
+    Texture diceFaces[6];
+    for (int i = 0; i < 6; ++i)
+    {
+        string filename = "C:\\Users\\Admin\\Desktop\\SicBoGame\\Image\\face_" + to_string(i + 1) + ".jpg";
+        if (!diceFaces[i].loadFromFile(filename))
+        {
+            cout << "Khong the tai hinh anh mui ten." << endl;
+            return -1;
+        }
+    }
+
+    Sprite diceSprite;
+    diceSprite.setTexture(diceFaces[0]);
+    diceSprite.setScale(0.5f, 0.5f);
+    diceSprite.setPosition(350, 250);
+
+    RectangleShape diceBorder(Vector2f(150, 150));
+    diceBorder.setFillColor(Color::Transparent);
+    diceBorder.setOutlineThickness(5);
+    diceBorder.setOutlineColor(Color::White);
+    diceBorder.setPosition(350, 250);
+
+    Texture backgroundTexture;
+    if (!backgroundTexture.loadFromFile("C:\\Users\\Admin\\Desktop\\SicBoGame\\Image\\14.jpg"))
+    {
+        cout << "Khong the tai background." << endl;
+        return -1;
+    }
+
+    unsigned int windowWidth = window.getSize().x;
+    unsigned int windowHeight = window.getSize().y;
+
+    float scaleX = static_cast<float>(windowWidth) / backgroundTexture.getSize().x;
+    float scaleY = static_cast<float>(windowHeight) / backgroundTexture.getSize().y;
+
+    float scale = min(scaleX, scaleY);
+
+    Sprite backgroundSprite;
+    backgroundSprite.setTexture(backgroundTexture);
+    backgroundSprite.setScale(scale, scale);
+
+    float posX = (windowWidth - backgroundSprite.getGlobalBounds().width) / 2;
+    float posY = (windowHeight - backgroundSprite.getGlobalBounds().height) / 2;
+    backgroundSprite.setPosition(posX, posY);
+
+    Font font;
+    if (!font.loadFromFile("C:\\Users\\Admin\\Desktop\\SicBoGame\\arial\\arial.ttf"))
+    {
+        cout << "Khong the tai font chu." << endl;
+        return -1;
+    }
+
+    Text resultText;
+    resultText.setFont(font);
+    resultText.setCharacterSize(30);
+    resultText.setPosition(300, 420);
+
+    Text instructionText;
+    instructionText.setFont(font);
+    instructionText.setCharacterSize(20);
+    instructionText.setPosition(250, 550);
+    instructionText.setString("PRESS SPACE KEY TO SHAKE");
+
+    random_device rd;
+    default_random_engine engine(rd());
+    uniform_int_distribution<int> diceDistribution(1, 6);
+
+    bool isRolling = false;
+    int numFrames = 10;
+    int currentFrame = 0;
+    int diceValue = 1;
+
+    while (window.isOpen())
+    {
+        window.clear();
+        window.draw(backgroundSprite);
+        window.draw(diceBorder);
+        window.draw(instructionText);
+
+        Event event;
+        while (window.pollEvent(event))
+        {
+            if (event.type == Event::Closed)
+                window.close();
+
+            if (event.type == Event::KeyPressed && event.key.code == Keyboard::Space && !isRolling)
+            {
+                isRolling = true;
+                numFrames = diceDistribution(engine) * 10;
+                currentFrame = 0;
+                uniform_int_distribution<int> delayDistribution(5, 10);
+                int delay = delayDistribution(engine);
+
+                for (int i = 0; i < delay; ++i)
+                {
+                    diceValue = diceDistribution(engine);
+
+                    diceSprite.setTexture(diceFaces[diceValue - 1]);
+                    window.clear();
+                    window.draw(backgroundSprite);
+                    window.draw(diceBorder);
+                    window.draw(diceSprite);
+                    window.display();
+                    sleep(milliseconds(200));
+                }
+
+                isRolling = false;
+            }
+        }
+
+        window.clear();
+        window.draw(backgroundSprite);
+        window.draw(diceBorder);
+        window.draw(diceSprite);
+        resultText.setString("Gia tri xuc sac la: " + to_string(diceValue));
+        window.draw(resultText);
+        window.draw(instructionText);
+        window.display();
+    }
+
+    return 0;
+}
